@@ -32,27 +32,21 @@ install_packages () {
 }
 
 configure_locales () {
-  grep -q -F 'export LANGUAGE=en_US.UTF-8' /etc/bash.bashrc || echo 'export LANGUAGE=en_US.UTF-8' >> /etc/bash.bashrc
-  grep -q -F 'export LANG=en_US.UTF-8' /etc/bash.bashrc || echo 'export LANG=en_US.UTF-8' >> /etc/bash.bashrc
-  grep -q -F 'export LC_ALL=en_US.UTF-8' /etc/bash.bashrc || echo 'export LC_ALL=en_US.UTF-8' >> /etc/bash.bashrc
-  sudo locale-gen en_US.UTF-8
-  sudo dpkg-reconfigure locales
+  rm /etc/bash.bashrc
+  ln -s /vagrant/configs/bash.bashrc /etc/bash.bashrc
+  locale-gen en_US.UTF-8
+  dpkg-reconfigure locales
 }
 
 configure_postgesql () {
   PG_CONF="/etc/postgresql/$PG_VERSION/main/postgresql.conf"
   PG_HBA="/etc/postgresql/$PG_VERSION/main/pg_hba.conf"
 
-  # Edit postgresql.conf to change listen address to '*':
-  sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" "$PG_CONF"
-
-  # Append to pg_hba.conf to add password auth:
-  PG_HBA_RULE="host    all             all             all                     md5"
-  grep -q -F "$PG_HBA_RULE" "$PG_HBA" || echo "$PG_HBA_RULE" >> "$PG_HBA"
-
-  # Explicitly set default client_encoding
-  PG_CONF_ENCODING="client_encoding = utf8"
-  grep -q -F "$PG_CONF_ENCODING" "$PG_CONF" || echo "$PG_CONF_ENCODING" >> "$PG_CONF"
+  # Create symlinks to PG configs
+  rm "$PG_CONF"
+  rm "$PG_HBA"
+  ln -s /vagrant/configs/postgresql.conf "$PG_CONF"
+  ln -s /vagrant/configs/pg_hba.conf "$PG_HBA"
 
   # Restart to load new configs:
   service postgresql restart
