@@ -2,8 +2,9 @@
 
 PG_HOST_PORT=54321
 
-APP_DB_USER=vagrant_db
+# TODO: Make it work with non-empty password
 APP_DB_PASS=
+APP_DB_USER=vagrant_db
 
 PG_DB_DUMP_PATH=/vagrant/db.dump
 
@@ -34,6 +35,7 @@ install_packages () {
 configure_locales () {
   rm /etc/bash.bashrc
   ln -s /vagrant/configs/bash.bashrc /etc/bash.bashrc
+  chown -h vagrant:vagrant /etc/bash.bashrc
   locale-gen en_US.UTF-8
   dpkg-reconfigure locales
 }
@@ -47,9 +49,11 @@ configure_postgesql () {
   rm "$PG_HBA"
   ln -s /vagrant/configs/postgresql.conf "$PG_CONF"
   ln -s /vagrant/configs/pg_hba.conf "$PG_HBA"
+  chown -h postgres:postgres "$PG_CONF"
+  chown -h postgres:postgres "$PG_HBA"
 
   # Restart to load new configs:
-  service postgresql restart
+  su - postgres service postgresql restart
 
   # TODO: Add check if user and DB created
   echo "CREATE USER $APP_DB_USER WITH SUPERUSER PASSWORD '$APP_DB_PASS';" | su - postgres -c psql
