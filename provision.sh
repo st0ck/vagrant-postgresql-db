@@ -59,6 +59,7 @@ configure_postgesql () {
   echo "CREATE USER $APP_DB_USER WITH SUPERUSER PASSWORD '$APP_DB_PASS';" | su - postgres -c psql
   # echo "ALTER USER $APP_DB_USER WITH SUPERUSER;" | su - postgres -c psql
   echo "CREATE DATABASE $APP_DB_NAME WITH OWNER=$APP_DB_USER;" | su - postgres -c psql
+  echo "CREATE DATABASE ${APP_DB_NAME}_test WITH OWNER=$APP_DB_USER;" | su - postgres -c psql
 }
 
 restore_dump () {
