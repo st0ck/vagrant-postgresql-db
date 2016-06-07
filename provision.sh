@@ -29,7 +29,10 @@ add_repos () {
 install_packages () {
   apt-get update
   apt-get -y upgrade
-  apt-get -y install "postgresql-$PG_VERSION" "postgresql-contrib-$PG_VERSION"
+  apt-get -y install "postgresql-$PG_VERSION" \
+                     "postgresql-contrib-$PG_VERSION" \
+                     "postgresql-server-dev-$PG_VERSION" \
+                     "git"
 }
 
 configure_locales () {
@@ -60,6 +63,15 @@ configure_postgesql () {
   # echo "ALTER USER $APP_DB_USER WITH SUPERUSER;" | su - postgres -c psql
   echo "CREATE DATABASE $APP_DB_NAME WITH OWNER=$APP_DB_USER;" | su - postgres -c psql
   echo "CREATE DATABASE ${APP_DB_NAME}_test WITH OWNER=$APP_DB_USER;" | su - postgres -c psql
+
+  install_temporal_tables
+}
+
+install_temporal_tables () {
+  git clone https://github.com/arkhipov/temporal_tables
+  cd temporal_tables
+  make
+  make install PGUSER=postgres
 }
 
 restore_dump () {
