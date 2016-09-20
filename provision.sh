@@ -10,7 +10,7 @@ PG_DB_DUMP_PATH=/vagrant/db.dump
 
 APP_DB_NAME=vagrant_db
 
-PG_VERSION=9.4
+PG_VERSION=9.5
 
 #-------------------------------------------------------------------------------
 
