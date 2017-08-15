@@ -19,7 +19,7 @@ add_repos () {
   if [ ! -f "$PG_REPO_APT_SOURCE" ]
   then
     # Add PG apt repo:
-    echo "deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main" > "$PG_REPO_APT_SOURCE"
+    echo "deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main" > "$PG_REPO_APT_SOURCE"
 
     # Add PGDG repo key:
     wget --quiet -O - https://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | apt-key add -
@@ -28,11 +28,19 @@ add_repos () {
 
 install_packages () {
   apt-get update
-  apt-get -y upgrade
+
+  # Grub workaround
+  DEBIAN_FRONTEND=noninteractive apt-get upgrade -yq
+
   apt-get -y install "postgresql-$PG_VERSION" \
+                     "postgresql-$PG_VERSION-repmgr" \
                      "postgresql-contrib-$PG_VERSION" \
                      "postgresql-server-dev-$PG_VERSION" \
-                     "git"
+                     "pgxnclient" \
+                     "make" \
+                     "gcc"
+  pgxn install jsonbx
+  pgxn install temporal_tables
 }
 
 configure_locales () {
@@ -48,15 +56,18 @@ configure_postgesql () {
   PG_HBA="/etc/postgresql/$PG_VERSION/main/pg_hba.conf"
 
   # Create symlinks to PG configs
-  rm "$PG_CONF"
-  rm "$PG_HBA"
+  # rm "$PG_CONF"
+  # rm "$PG_HBA"
+  cp "$PG_CONF $PG_CONF.backup"
+  cp "$PG_HBA $PG_HBA.backup"
   ln -s /vagrant/configs/postgresql.conf "$PG_CONF"
   ln -s /vagrant/configs/pg_hba.conf "$PG_HBA"
   chown -h postgres:postgres "$PG_CONF"
   chown -h postgres:postgres "$PG_HBA"
 
   # Restart to load new configs:
-  su - postgres service postgresql restart
+  # su - postgres service postgresql restart
+  service postgresql restart
 
   # TODO: Add check if user and DB created
   echo "CREATE USER $APP_DB_USER WITH SUPERUSER PASSWORD '$APP_DB_PASS';" | su - postgres -c psql
@@ -64,15 +75,15 @@ configure_postgesql () {
   echo "CREATE DATABASE $APP_DB_NAME WITH OWNER=$APP_DB_USER;" | su - postgres -c psql
   echo "CREATE DATABASE ${APP_DB_NAME}_test WITH OWNER=$APP_DB_USER;" | su - postgres -c psql
 
-  install_temporal_tables
+  # install_temporal_tables
 }
 
-install_temporal_tables () {
-  git clone https://github.com/arkhipov/temporal_tables
-  cd temporal_tables
-  make
-  make install PGUSER=postgres
-}
+# install_temporal_tables () {
+#   git clone https://github.com/arkhipov/temporal_tables
+#   cd temporal_tables
+#   make
+#   make install PGUSER=postgres
+# }
 
 restore_dump () {
   # echo "$APP_DB_PASS" | pg_restore -U "$APP_DB_USER" -O -h localhost -d "$APP_DB_NAME" "$PG_DB_DUMP_PATH"
