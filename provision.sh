@@ -19,10 +19,10 @@ add_repos () {
   if [ ! -f "$PG_REPO_APT_SOURCE" ]
   then
     # Add PG apt repo:
-    echo "deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main" > "$PG_REPO_APT_SOURCE"
+    echo "deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main" | sudo tee -a "$PG_REPO_APT_SOURCE"
 
     # Add PGDG repo key:
-    wget --quiet -O - https://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | apt-key add -
+    wget --quiet -O - https://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | sudo apt-key add -
   fi
 }
 
@@ -32,7 +32,7 @@ install_packages () {
   # Grub workaround
   DEBIAN_FRONTEND=noninteractive apt-get upgrade -yq
 
-  apt-get -y install "postgresql-$PG_VERSION" \
+  DEBIAN_FRONTEND=noninteractive apt-get -yq install "postgresql-$PG_VERSION" \
                      "postgresql-$PG_VERSION-repmgr" \
                      "postgresql-contrib-$PG_VERSION" \
                      "postgresql-server-dev-$PG_VERSION" \
@@ -56,12 +56,14 @@ configure_postgesql () {
   PG_HBA="/etc/postgresql/$PG_VERSION/main/pg_hba.conf"
 
   # Create symlinks to PG configs
-  # rm "$PG_CONF"
-  # rm "$PG_HBA"
-  cp "$PG_CONF $PG_CONF.backup"
-  cp "$PG_HBA $PG_HBA.backup"
-  ln -s /vagrant/configs/postgresql.conf "$PG_CONF"
-  ln -s /vagrant/configs/pg_hba.conf "$PG_HBA"
+  cp $PG_CONF $PG_CONF.backup
+  cp $PG_HBA $PG_HBA.backup
+  rm "$PG_CONF"
+  rm "$PG_HBA"
+  # ln -s /vagrant/configs/postgresql.conf "$PG_CONF"
+  # ln -s /vagrant/configs/pg_hba.conf "$PG_HBA"
+  cp /vagrant/configs/postgresql.conf "$PG_CONF"
+  cp /vagrant/configs/pg_hba.conf "$PG_HBA"
   chown -h postgres:postgres "$PG_CONF"
   chown -h postgres:postgres "$PG_HBA"
 
