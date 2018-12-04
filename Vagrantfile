@@ -3,6 +3,7 @@ Vagrant.configure(2) do |config|
   config.vm.hostname = 'postgresql-db'
   config.vm.provision :shell, path: 'provision.sh'
   config.vm.synced_folder ".", "/vagrant"
+  config.disksize.size = '400GB'
 
   # guest - is a VM
   config.vm.network :forwarded_port,

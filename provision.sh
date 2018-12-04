@@ -10,7 +10,7 @@ PG_DB_DUMP_PATH=/vagrant/db.dump
 
 APP_DB_NAME=vagrant_db
 
-PG_VERSION=9.5
+PG_VERSION=10
 
 #-------------------------------------------------------------------------------
 
@@ -48,7 +48,7 @@ configure_locales () {
   ln -s /vagrant/configs/bash.bashrc /etc/bash.bashrc
   chown -h vagrant:vagrant /etc/bash.bashrc
   locale-gen en_US.UTF-8
-  dpkg-reconfigure locales
+  dpkg-reconfigure --frontend=noninteractive locales
 }
 
 configure_postgesql () {
@@ -60,35 +60,23 @@ configure_postgesql () {
   cp $PG_HBA $PG_HBA.backup
   rm "$PG_CONF"
   rm "$PG_HBA"
-  # ln -s /vagrant/configs/postgresql.conf "$PG_CONF"
-  # ln -s /vagrant/configs/pg_hba.conf "$PG_HBA"
-  cp /vagrant/configs/postgresql.conf "$PG_CONF"
+
+  # echo "client_encoding = utf8" >> "$PG_CONF"
+  cp "/vagrant/configs/postgresql-$PG_VERSION.conf" "$PG_CONF"
   cp /vagrant/configs/pg_hba.conf "$PG_HBA"
   chown -h postgres:postgres "$PG_CONF"
   chown -h postgres:postgres "$PG_HBA"
 
   # Restart to load new configs:
-  # su - postgres service postgresql restart
   service postgresql restart
 
   # TODO: Add check if user and DB created
   echo "CREATE USER $APP_DB_USER WITH SUPERUSER PASSWORD '$APP_DB_PASS';" | su - postgres -c psql
-  # echo "ALTER USER $APP_DB_USER WITH SUPERUSER;" | su - postgres -c psql
   echo "CREATE DATABASE $APP_DB_NAME WITH OWNER=$APP_DB_USER;" | su - postgres -c psql
   echo "CREATE DATABASE ${APP_DB_NAME}_test WITH OWNER=$APP_DB_USER;" | su - postgres -c psql
-
-  # install_temporal_tables
 }
 
-# install_temporal_tables () {
-#   git clone https://github.com/arkhipov/temporal_tables
-#   cd temporal_tables
-#   make
-#   make install PGUSER=postgres
-# }
-
 restore_dump () {
-  # echo "$APP_DB_PASS" | pg_restore -U "$APP_DB_USER" -O -h localhost -d "$APP_DB_NAME" "$PG_DB_DUMP_PATH"
   su - postgres -c "pg_restore -O -d $APP_DB_NAME $PG_DB_DUMP_PATH"
 }
 
